@@ -1,0 +1,414 @@
+set serveroutput on;
+1. 
+DECLARE
+	a int;
+BEGIN
+	a:=&a;
+	if a>0 then
+		dbms_output.put_line('Hello World');
+	end if;
+END;
+
+========================================================================
+
+2.
+DECLARE
+	sal int;
+BEGIN
+	sal:=&sal;
+	if sal>=50000 then
+		dbms_output.put_line('Grade A');
+	elsif sal>=30000 then
+		dbms_output.put_line('Grade B');
+	elsif sal<30000 then
+		dbms_output.put_line('Grade C');
+	end if;
+END;
+
+========================================================================
+
+3.
+DECLARE
+    a INT;
+BEGIN
+    a := &a;
+    IF a > 3000 THEN
+        a := a + 500;
+        dbms_output.put_line(a);
+    END IF;
+END;
+
+========================================================================
+
+4.
+CRAETE TABLE EMP_TABLE(
+	emp_id number primary key,
+	emp_name varchar2(100)
+);
+
+DECLARE
+    v_name EMP_TABLE.emp_name%TYPE;
+BEGIN
+    FOR i IN 1..10 LOOP
+        v_name := '&name';
+        INSERT INTO EMP_TABLE(emp_id, emp_name)
+        VALUES (i, v_name);
+    END LOOP;
+    COMMIT;
+END;
+
+========================================================================
+
+5.
+DECLARE
+    a INT := 0;
+    b INT := 1;
+    c INT;
+    i INT;
+    n INT;
+BEGIN
+    n := &n;
+    FOR i IN 1..n LOOP
+        dbms_output.put_line(a);
+        c := a + b;
+        a := b;
+        b := c;
+    END LOOP;
+END;
+
+========================================================================
+
+6.
+DECLARE
+    v_name EMP_TABLE.emp_name%TYPE;
+BEGIN
+    v_name := '&name';
+    INSERT INTO EMP_TABLE(emp_id, emp_name)
+    VALUES (i, v_name);
+    COMMIT;
+END;
+
+========================================================================
+
+7.
+DECLARE
+    n int;
+    rev int := 0;
+BEGIN
+    n := &n;
+
+    WHILE n > 0 LOOP
+        rev := rev * 10 + MOD(n, 10);
+        n := n / 10;
+    END LOOP;
+
+    dbms_output.put_line('Reversed Number = ' || rev);
+END;
+
+========================================================================
+
+8.
+DECLARE
+	a int;
+BEGIN
+	a := &a;
+	CASE a
+		when 10 then dbms_output.put_line('Finance');
+		when 20 then dbms_output.put_line('HR');
+		when 30 then dbms_output.put_line('IT');
+		when 40 then dbms_output.put_line('Sales');
+		else dbms_output.put_line('Invalid Department');
+	END CASE;
+END;
+
+========================================================================
+
+10.
+DECLARE
+    sum NUMBER := 0;
+BEGIN
+    FOR i IN 1..200 LOOP
+        IF MOD(i, 2) = 0 THEN
+            sum := sum+i
+        END IF;
+    END LOOP;
+END;
+
+========================================================================
+
+11.
+CREATE OR REPLACE PROCEDURE add_employee(
+    p_emp_id     IN EMP_TABLE.emp_id%TYPE,
+    p_emp_ename  IN EMP_TABLE.emp_name%TYPE
+)
+AS
+BEGIN
+    INSERT INTO EMP_TABLE(emp_id, emp_name)
+    VALUES (p_emp_id, p_emp_ename);
+
+    dbms_output.put_line('Employee added');
+
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line(SQLERRM);
+        ROLLBACK;
+END;
+
+========================================================================
+
+12.
+CREATE OR REPLACE PROCEDURE emp_details(
+	p_emp_id IN EMP_TABLE.emp_id%TYPE
+)
+AS
+    	p_emp_ename EMP_TABLE.emp_name%TYPE
+BEGIN
+	SELECT emp_name
+	INTO p_emp_ename
+	FROM EMP_TABLE
+	WHERE emp_id = p_emp_id;
+	dbms_output.put_line('Name: ' || p_emp_ename);
+EXCEPTION
+	WHEN OTHERS THEN
+		dbms_output.put_line(SQLERRM);
+END;
+
+========================================================================
+
+13.
+CREATE OR REPLACE PROCEDURE get_employee_details(
+    p_eid    IN  EMP_TABLE.emp_id%TYPE,
+    p_name   OUT EMP_TABLE.emp_name%TYPE,
+)
+AS
+BEGIN
+    SELECT emp_name
+    INTO p_name
+    FROM EMP_TABLE
+    WHERE emp_id = p_eid;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        dbms_output.put_line(SQLERRM);
+END;
+
+========================================================================
+
+14.
+CREATE OR REPLACE PROCEDURE emp_details(
+	p_deptno IN NUMBER
+) IS
+BEGIN
+	FOR r IN (
+		SELECT s.grade, count(*) cnt
+		from emp e, salgrade s
+		where e.deptno = p_deptno
+		GROUP BY s.grade
+		ORDER BY s.grade
+	) LOOP 
+		DBMS_OUTPUT.PUT_LINE(r.grade || r.cnt);
+	END LOOP;
+END;
+
+========================================================================
+
+15.
+CREATE OR REPLACE FUNCTION total_salary_dept(
+	dno IN NUMBER
+)
+RETURN NUMBER
+IS
+	total_sal NUMBER;
+BEGIN
+	SELECT sum(sal)
+	INTO total_sal
+	FROM emp
+	where deptno = dno;
+	
+	return total_sal;
+END;
+
+========================================================================
+
+16.
+CREATE OR REPLACE FUNCTION count_emp_dept(
+	dno IN NUMBER
+)
+RETURN NUMBER
+IS
+	cnt NUMBER;
+BEGIN
+	SELECT count(*)
+	INTO cnt
+	FROM emp
+	where deptno = dno;
+	
+	return cnt;
+END;
+
+========================================================================
+
+17.
+CREATE OR REPLACE FUNCTION cal_bonus(
+	p_no IN NUMBER
+)
+RETURN NUMBER
+IS
+	new_sal emp.sal%type;
+BEGIN
+
+	SELECT sal
+	into new_sal
+	from emp
+	where empno = p_no;
+
+	return new_sal * 0.20;
+END;
+
+=======================================================================
+
+18.
+CREATE OR REPLACE PROCEDURE show_emp(
+	e_id IN NUMBER
+) IS
+	v_name emp.ename%type;
+	v_sal emp.sal%type;
+	v_dept emp.dname%type;
+BEGIN
+	SELECT e.ename, e.sal, d.dname
+	INTO v_name, v_sal, v_dept
+	from emp e, dept d
+	where e.deptno = d.deptno
+	AND e.empno = e_id
+	
+	DBMS_OUTPUT.PUT_LINE(v_name || v_sal || v_dept);
+END;
+
+========================================================================
+
+19.
+CREATE OR REPLACE PROCEDURE update_salary(
+	eno IN NUMBER,
+	percentage IN NUMBER
+)
+BEGIN
+	UPDATE emp
+	SET sal = sal + (sal * percent / 100)
+	where empno = eno;
+END;
+
+========================================================================
+
+20.
+CREATE OR REPLACE FUNCTION calculate_age(
+	p_emp_id IN NUMBER
+) IS
+	v_dob DATE;
+	v_age NUMBER;
+BEGIN
+	SELECT dob
+	INTO v_dob
+	from emp
+	where empno = p_emp_id;
+
+	v_age := FLOOR(MONTHS_BETWEEN(SYSDATE, v_dob) / 12);
+
+	return v_age;
+END;
+
+=======================================================================
+
+21.
+DELCARE
+	CURSOR c_emp IS
+		SELECT ename, sal
+		FROM emp;
+BEGIN
+	OPEN c_emp
+		FOR r IN c_emp LOOP
+			DBMS_OUTPUT.PUT_LINE(r.name || r.sal);
+		END LOOP;
+	CLOSE c_emp;
+END;
+
+=======================================================================
+
+22.
+DELCARE
+	CURSOR c_emp IS
+		SELECT empno, ename, job
+		FROM emp
+		WHERE job IN ('MANAGER', 'ANALYST');
+BEGIN
+	OPEN c_emp
+		FOR r IN c_emp LOOP
+			DBMS_OUTPUT.PUT_LINE(r.empno || r.name || r.job);
+		END LOOP;
+	CLOSE c_emp;
+END;
+
+======================================================================
+
+23.
+DECLARE
+	CURSOR sales_cursor IS
+		SELECT e.empno, e.sal, e.ename
+		from emp e
+		JOIN dept d on e.deptno = d.deptno
+		where d.dname = 'SALES';
+
+	v_new_sal emp.sal%TYPE;
+
+BEGIN
+	FOR emp_rec IN sales_cursor
+	LOOP
+		v_new_sal := emp_rec.sal * 0.10;
+
+		DBMS_OUTPUT.PUT_LINE(
+     	 		'Employee: ' || emp_rec.ename ||
+     			' | Old Salary: ' || emp_rec.sal ||
+      			' | New Salary: ' || v_new_sal
+   		);
+
+		UPDATE emp
+		SET sal = v_new_sal
+		WHERE empno = emp_rec.empno;
+	
+	END LOOP;
+	COMMIT;
+END;
+
+======================================================================
+
+24. BEGIN
+  UPDATE employee
+  SET salary = salary + 1000; 
+
+  IF SQL%ROWCOUNT = 0 THEN
+    DBMS_OUTPUT.PUT_LINE('None of the salaries were updated.');
+  ELSE
+    DBMS_OUTPUT.PUT_LINE('Salaries for ' || SQL%ROWCOUNT || ' employees are updated.');
+  END IF;
+
+  COMMIT;
+END;
+/
+
+====================================================================
+
+25. DECLARE
+  CURSOR c_top5 IS
+    SELECT empno, name, salary, designation, deptid
+    FROM employee
+    ORDER BY salary DESC
+    FETCH FIRST 5 ROWS ONLY; 
+
+BEGIN
+  FOR rec IN c_top5 LOOP
+    DBMS_OUTPUT.PUT_LINE(
+      rec.empno || '  ' || rec.name || '  ' || rec.salary || 
+      '  ' || rec.designation || '  ' || rec.deptid
+    );
+  END LOOP;
+END;
+/
